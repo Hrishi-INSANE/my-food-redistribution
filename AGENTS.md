@@ -1,5 +1,8 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+Coding Rules for FoodShare Project:
+* Framework: Always use Next.js 15+ with the App Router (src/app directory).
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+Styling: Use Tailwind CSS for all layouts. Prioritize Bento Grid designs with rounded-2xl and shadow-sm.
+
+Optimization: Assume the React Compiler is active. Avoid manual useMemo or useCallback unless specifically asked.
+* Icons: Use Lucide React for all iconography.
+* Animations: Use Framer Motion for smooth page transitions and hover effects.

@@ -1,65 +1,90 @@
-import Image from "next/image";
+'use client'; 
+import { useState } from 'react'; 
+import { motion } from 'framer-motion';
+import { PlusCircle, Package, Heart, ArrowRight, Utensils } from 'lucide-react';
+import DonationForm from '@/components/DonationForm'; 
 
-export default function Home() {
+export default function DonorDashboard() {
+  const [isFormOpen, setIsFormOpen] = useState(false); 
+  const [donations, setDonations] = useState([
+    { id: 1, name: '15x Fresh Salads', expiry: '2h' } // Start with one fake one
+  ]);
+
+  
+  const addDonation = (newName) => {
+    const newEntry = {
+      id: Date.now(), 
+      name: newName,
+      expiry: '4h' 
+    };
+    setDonations([newEntry, ...donations]); // Add new item to the top of the list
+  };
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen bg-gray-50/50 p-4 md:p-8">
+      {/* 1. Slide-over Form component */}
+      <DonationForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} onAddDonation={addDonation}/>
+      
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Green Bistro Dashboard</h1>
+          <p className="text-gray-500">You've helped 12 families this week. Keep it up!</p>
+        </header>
+
+        {/* 2. Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-6">
+          
+          {/* Main Action Cell */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="md:col-span-2 md:row-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div>
+              <div className="bg-green-100 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-green-600">
+                <PlusCircle size={28} />
+              </div>
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">Post New Donation</h2>
+              <p className="text-gray-500 text-lg">List surplus food in under 60 seconds.</p>
+            </div>
+            <button 
+              onClick={() => setIsFormOpen(true)}
+              className="w-full bg-green-600 text-white py-4 rounded-2xl font-semibold hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100"
+            >
+              Start Listing <ArrowRight size={18} />
+            </button>
+          </motion.div>
+
+          {/* Active Listings Cell */}
+          <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                  <h3 className="font-bold mb-6 flex items-center gap-2"><Package size={20}/> Active Listings</h3>
+                  <div className="space-y-3">
+                    {donations.map((item) => (
+                      <div key={item.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
+                        <span>{item.name}</span>
+                        <span className="text-xs font-semibold text-orange-500 bg-orange-50 px-2 py-1 rounded-md">
+                          Expires in {item.expiry}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+          {/* Impact Stats Cell */}
+          <div className="bg-orange-500 p-6 rounded-3xl shadow-lg shadow-orange-100 text-white flex flex-col justify-center">
+             <Heart className="mb-2 opacity-80" />
+             <p className="text-sm opacity-90 font-medium mb-1 uppercase tracking-wider">Total Impact</p>
+             <p className="text-5xl font-bold">452</p>
+             <p className="text-sm opacity-80 mt-1 italic text-orange-100">Meals Saved</p>
+          </div>
+
+          {/* Motivation Cell */}
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-center">
+            <p className="text-gray-400 text-sm italic leading-relaxed">
+              "Your store is in the <span className="text-green-600 font-bold">top 5%</span> of local donors this month."
+            </p>
+          </div>
+
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
