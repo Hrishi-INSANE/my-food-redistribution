@@ -1,101 +1,143 @@
-'use client'; 
-import { useState, useEffect } from 'react'; 
-import { motion } from 'framer-motion';
-import { PlusCircle, Package, Heart, ArrowRight, Utensils } from 'lucide-react';
-import DonationForm from '@/components/DonationForm'; 
-import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+'use client';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { Plus, Package, Clock, CheckCircle } from 'lucide-react';
+import DonationForm from '@/components/DonationForm';
 
 export default function DonorDashboard() {
+  // 1. ALL HOOKS FIRST
+  const { user, role, loading } = useAuth();
+  const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [donations, setDonations] = useState([]); // Start with an empty list
+  const [donations, setDonations] = useState([]);
 
-  // 1. The "Receiver": This listens to the cloud 24/7
+  // 2. THE GATEKEEPER (Redirect Logic)
   useEffect(() => {
-    const q = query(collection(db, "donations"), orderBy("createdAt", "desc"));
-    
-    // onSnapshot means "Whenever the cloud changes, do this immediately"
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const donationList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setDonations(donationList); // Update the screen with real cloud data
-    });
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else if (role === null) {
+        router.push('/role-selection');
+      } else if (role === 'recipient') {
+        router.push('/marketplace');
+      }
+    }
+  }, [user, role, loading, router]);
 
-    return () => unsubscribe(); // Turn off the radio when we leave the page
-      }, []);
-    
+  // 3. THE DATA FETCHER (Listen to Firebase)
+useEffect(() => {
+  if (!user || role !== 'donor') return;
+
+  // 1. Define the collection reference
+  const donationsRef = collection(db, "donations");
+
+  // 2. Define the query 'q' (This is what was missing!)
+  // We're querying all donations where the donor is the current user
+  const q = query(donationsRef); 
+
+  // 3. Use 'q' in the listener
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const allItems = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    setDonations(allItems);
+  });
+
+  return () => unsubscribe();
+}, [user, role]);
+
+  // 4. THE LOADING GUARD (Prevents the Black Screen)
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse text-xl font-semibold text-gray-400">Loading your dashboard...</div>
+      </div>
+    );
+  }
+
+  // 5. THE SECURITY GUARD (Hides UI if not authorized)
+  if (!user || role !== 'donor') return null;
+
+  // 6. THE BENTO GRID (Your actual Dashboard)
+// 6. THE BENTO GRID (Your actual Dashboard)
   return (
-    <main className="min-h-screen bg-gray-50/50 p-4 md:p-8">
-      {/* 1. Slide-over Form component */}
-      <DonationForm 
-  isOpen={isFormOpen} 
-  onClose={() => setIsFormOpen(false)} 
-  // REMOVE: onAddDonation={addDonation} <-- Delete this line!
-/>
-      
+    <main className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Green Bistro Dashboard</h1>
-          <p className="text-gray-500">You've helped 12 families this week. Keep it up!</p>
-        </header>
-
-        {/* 2. Bento Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-6">
-          
-          {/* Main Action Cell */}
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="md:col-span-2 md:row-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between"
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Donor Dashboard</h1>
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-green-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-100"
           >
-            <div>
-              <div className="bg-green-100 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-green-600">
-                <PlusCircle size={28} />
-              </div>
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">Post New Donation</h2>
-              <p className="text-gray-500 text-lg">List surplus food in under 60 seconds.</p>
+            <Plus size={20} />
+            Start Listing
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[180px]">
+          {/* Main List Box (Large) */}
+          <div className="md:col-span-3 md:row-span-3 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 mb-6">
+              <Package className="text-green-600" size={24} />
+              <h2 className="text-xl font-bold">Active Donations</h2>
             </div>
-            <button 
-              onClick={() => setIsFormOpen(true)}
-              className="w-full bg-green-600 text-white py-4 rounded-2xl font-semibold hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100"
-            >
-              Start Listing <ArrowRight size={18} />
-            </button>
-          </motion.div>
-
-          {/* Active Listings Cell */}
-          <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                  <h3 className="font-bold mb-6 flex items-center gap-2"><Package size={20}/> Active Listings</h3>
-                  <div className="space-y-3">
-                    {donations.map((item) => (
-                      <div key={item.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
-                        <span>{item.name}</span>
-                        <span className="text-xs font-semibold text-orange-500 bg-orange-50 px-2 py-1 rounded-md">
-                          Expires in {item.expiry}
-                        </span>
-                      </div>
-                    ))}
+            
+            <div className="flex-1 overflow-y-auto space-y-4">
+              {donations.length === 0 ? (
+                <p className="text-gray-400 italic text-center py-10">No active listings yet. Post some food!</p>
+              ) : (
+                donations.map((item) => (
+                  <div key={item.id} className={`flex justify-between items-center p-4 rounded-2xl border transition-all ${
+                    item.status === 'claimed' ? 'bg-gray-100 opacity-60 border-transparent' : 'bg-gray-50 border-gray-100'
+                  }`}>
+                    <div>
+                      <h4 className="font-bold text-gray-800">{item.foodName}</h4>
+                      <p className="text-sm text-gray-500">
+                        {item.status === 'claimed' ? 'Claimed! Preparation needed.' : (item.quantity || 'Available for pickup')}
+                      </p>
+                    </div>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
+                      item.status === 'claimed' ? 'bg-gray-300 text-gray-600' : 'bg-green-100 text-green-700'
+                    }`}>
+                      {item.status || 'available'}
+                    </span>
                   </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Stats Box (Small) */}
+          <div className="bg-green-600 rounded-3xl p-6 shadow-lg shadow-green-100 text-white flex flex-col justify-center items-center">
+            <span className="text-4xl font-bold">{donations.filter(d => d.status !== 'claimed').length}</span>
+            <span className="text-sm opacity-80 uppercase tracking-wider font-semibold">Ready Now</span>
+          </div>
+
+          {/* Schedule Box (Tall) */}
+          <div className="md:row-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col">
+            <div className="flex items-center gap-2 mb-4 text-orange-600">
+              <Clock size={20} />
+              <h3 className="font-bold">Next Pickup</h3>
+            </div>
+            {donations.some(d => d.status === 'claimed') ? (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-600">You have items ready for pickup!</p>
+                <div className="p-3 bg-orange-50 rounded-xl border border-orange-100 text-orange-700 text-xs">
+                  Check your Active List for claimed items.
                 </div>
-
-          {/* Impact Stats Cell */}
-          <div className="bg-orange-500 p-6 rounded-3xl shadow-lg shadow-orange-100 text-white flex flex-col justify-center">
-             <Heart className="mb-2 opacity-80" />
-             <p className="text-sm opacity-90 font-medium mb-1 uppercase tracking-wider">Total Impact</p>
-             <p className="text-5xl font-bold">452</p>
-             <p className="text-sm opacity-80 mt-1 italic text-orange-100">Meals Saved</p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 italic">Waiting for claims...</p>
+            )}
           </div>
-
-          {/* Motivation Cell */}
-          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-center">
-            <p className="text-gray-400 text-sm italic leading-relaxed">
-              "Your store is in the <span className="text-green-600 font-bold">top 5%</span> of local donors this month."
-            </p>
-          </div>
-
         </div>
       </div>
+
+      <DonationForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 // 1. Import the specific tools we need from the "firebase" package you installed
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // 2. This is your project's "ID Card". It tells Google which database to talk to.
 const firebaseConfig = {
@@ -18,3 +19,4 @@ const app = initializeApp(firebaseConfig);
 // 4. This specifically starts the "Database" part of the engine and exports it
 // so our other files (like the Form) can use it.
 export const db = getFirestore(app);
+export const auth = getAuth(app);
