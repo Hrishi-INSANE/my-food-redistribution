@@ -3,15 +3,17 @@ import { useState } from 'react'; // 1. Import useState
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export default function DonationForm({ isOpen, onClose }) {
+export default function DonationForm({ isOpen, onClose, onAddDonation }) {
   const [foodName, setFoodName] = useState(''); // 2. Create the "memory" for the input
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(`Listing posted: ${foodName}`); // Just a test for now!
-    setFoodName(''); // Clear the form
-    onClose(); // Close the slide-over
-  };
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (foodName.trim()) {
+        onAddDonation(foodName); // Send the name up to the Dashboard
+        setFoodName(''); // Clear the input
+        onClose(); // Close the panel
+      }
+    };
 
   return (
     <AnimatePresence>
