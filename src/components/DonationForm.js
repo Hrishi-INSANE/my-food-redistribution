@@ -2,18 +2,31 @@
 import { useState } from 'react'; // 1. Import useState
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-
+import { db } from '../lib/firebase'; // 1. Import your bridge
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // 2. Import Google's tools
 export default function DonationForm({ isOpen, onClose, onAddDonation }) {
   const [foodName, setFoodName] = useState(''); // 2. Create the "memory" for the input
 
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      if (foodName.trim()) {
-        onAddDonation(foodName); // Send the name up to the Dashboard
-        setFoodName(''); // Clear the input
-        onClose(); // Close the panel
-      }
-    };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (foodName.trim()) {
+    try {
+      // 3. This is the "Shout": Send data to a folder called "donations"
+      await addDoc(collection(db, "donations"), {
+        name: foodName,
+        expiry: "4h", // We can make this a real input later
+        createdAt: serverTimestamp() // Adds a professional timestamp
+      });
+
+      setFoodName(''); // Clear the form
+      onClose(); // Close the panel
+    } catch (error) {
+      console.error("Error adding donation: ", error);
+      alert("Something went wrong with the cloud connection.");
+    }
+  }
+};
 
   return (
     <AnimatePresence>

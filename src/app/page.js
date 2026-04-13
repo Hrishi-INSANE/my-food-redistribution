@@ -1,28 +1,39 @@
 'use client'; 
-import { useState } from 'react'; 
+import { useState, useEffect } from 'react'; 
 import { motion } from 'framer-motion';
 import { PlusCircle, Package, Heart, ArrowRight, Utensils } from 'lucide-react';
 import DonationForm from '@/components/DonationForm'; 
+import { db } from '../lib/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 export default function DonorDashboard() {
-  const [isFormOpen, setIsFormOpen] = useState(false); 
-  const [donations, setDonations] = useState([
-    { id: 1, name: '15x Fresh Salads', expiry: '2h' } // Start with one fake one
-  ]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [donations, setDonations] = useState([]); // Start with an empty list
 
-  
-  const addDonation = (newName) => {
-    const newEntry = {
-      id: Date.now(), 
-      name: newName,
-      expiry: '4h' 
-    };
-    setDonations([newEntry, ...donations]); // Add new item to the top of the list
-  };
+  // 1. The "Receiver": This listens to the cloud 24/7
+  useEffect(() => {
+    const q = query(collection(db, "donations"), orderBy("createdAt", "desc"));
+    
+    // onSnapshot means "Whenever the cloud changes, do this immediately"
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const donationList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setDonations(donationList); // Update the screen with real cloud data
+    });
+
+    return () => unsubscribe(); // Turn off the radio when we leave the page
+      }, []);
+    
   return (
     <main className="min-h-screen bg-gray-50/50 p-4 md:p-8">
       {/* 1. Slide-over Form component */}
-      <DonationForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} onAddDonation={addDonation}/>
+      <DonationForm 
+  isOpen={isFormOpen} 
+  onClose={() => setIsFormOpen(false)} 
+  // REMOVE: onAddDonation={addDonation} <-- Delete this line!
+/>
       
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
