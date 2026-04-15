@@ -8,16 +8,20 @@ import { X, Package, Clock, Info } from 'lucide-react';
 export default function DonationForm({ isOpen, onClose }) {
   const [foodName, setFoodName] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!foodName) return;
-
+    
     try {
       // THE CLOUD SHOUT: Sending data directly to Firestore [cite: 531, 536]
       await addDoc(collection(db, "donations"), {
         foodName: foodName,
         quantity: quantity,
+        phone: phone,
+        location: location,
         status: "available", // Default status so it shows in Marketplace [cite: 598]
         createdAt: serverTimestamp() // Professional way to track time 
       });
@@ -25,6 +29,8 @@ export default function DonationForm({ isOpen, onClose }) {
       // Reset and Close
       setFoodName("");
       setQuantity("");
+      setPhone('');
+      setLocation('');
       onClose();
     } catch (error) {
       console.error("Error adding to cloud: ", error);
@@ -70,6 +76,23 @@ export default function DonationForm({ isOpen, onClose }) {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition-all"
                   required
                 />
+                <input 
+                placeholder="Pickup Phone Number" 
+                value={phone} 
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full p-4 rounded-xl border border-gray-100 bg-gray-50"
+                required 
+                />
+                <input 
+                  placeholder="Pickup Address/Location" 
+                  value={location} 
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full p-4 rounded-xl border border-gray-100 bg-gray-50"
+                  required 
+                />
+                <button type="submit" className="w-full bg-green-600 text-white py-4 rounded-xl font-bold hover:bg-green-700">
+                  Post Listing
+                </button>
               </div>
 
               <button 

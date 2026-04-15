@@ -62,8 +62,6 @@ useEffect(() => {
   // 5. THE SECURITY GUARD (Hides UI if not authorized)
   if (!user || role !== 'donor') return null;
 
-  // 6. THE BENTO GRID (Your actual Dashboard)
-// 6. THE BENTO GRID (Your actual Dashboard)
   return (
     <main className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -85,39 +83,56 @@ useEffect(() => {
               <Package className="text-green-600" size={24} />
               <h2 className="text-xl font-bold">Active Donations</h2>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto space-y-4">
               {donations.length === 0 ? (
                 <p className="text-gray-400 italic text-center py-10">No active listings yet. Post some food!</p>
               ) : (
                 donations.map((item) => (
-                  <div key={item.id} className={`flex justify-between items-center p-4 rounded-2xl border transition-all ${
-                    item.status === 'claimed' ? 'bg-gray-100 opacity-60 border-transparent' : 'bg-gray-50 border-gray-100'
+                  <div key={item.id} className={`p-4 rounded-2xl border transition-all ${
+                    item.status === 'claimed' ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-100'
                   }`}>
-                    <div>
-                      <h4 className="font-bold text-gray-800">{item.foodName}</h4>
-                      <p className="text-sm text-gray-500">
-                        {item.status === 'claimed' ? 'Claimed! Preparation needed.' : (item.quantity || 'Available for pickup')}
-                      </p>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-bold text-gray-800">{item.foodName}</h4>
+                        <p className="text-sm text-gray-500">
+                          {item.status === 'claimed' ? '🎉 Ready for pickup!' : (item.quantity || 'Available')}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
+                        item.status === 'claimed' ? 'bg-blue-200 text-blue-700' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {item.status || 'available'}
+                      </span>
                     </div>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
-                      item.status === 'claimed' ? 'bg-gray-300 text-gray-600' : 'bg-green-100 text-green-700'
-                    }`}>
-                      {item.status || 'available'}
-                    </span>
+
+                    {/* THE REVEAL: Only show recipient info if item is claimed */}
+                    {item.status === 'claimed' && (
+                      <div className="mt-3 pt-3 border-t border-blue-100 flex flex-col gap-1">
+                        <p className="text-xs text-blue-800 font-semibold">
+                          Claimed by: {item.claimedBy || "Interested Neighbor"}
+                        </p>
+                        <a 
+                          href={`mailto:${item.claimedByEmail}`} 
+                          className="text-xs text-blue-600 underline truncate hover:text-blue-800"
+                        >
+                          {item.claimedByEmail}
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Stats Box (Small) */}
+          {/* Stats Box */}
           <div className="bg-green-600 rounded-3xl p-6 shadow-lg shadow-green-100 text-white flex flex-col justify-center items-center">
             <span className="text-4xl font-bold">{donations.filter(d => d.status !== 'claimed').length}</span>
             <span className="text-sm opacity-80 uppercase tracking-wider font-semibold">Ready Now</span>
           </div>
 
-          {/* Schedule Box (Tall) */}
+          {/* Schedule Box */}
           <div className="md:row-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col">
             <div className="flex items-center gap-2 mb-4 text-orange-600">
               <Clock size={20} />
@@ -126,8 +141,8 @@ useEffect(() => {
             {donations.some(d => d.status === 'claimed') ? (
               <div className="space-y-3">
                 <p className="text-xs text-gray-600">You have items ready for pickup!</p>
-                <div className="p-3 bg-orange-50 rounded-xl border border-orange-100 text-orange-700 text-xs">
-                  Check your Active List for claimed items.
+                <div className="p-3 bg-orange-50 rounded-xl border border-orange-100 text-orange-700 text-xs text-center">
+                  Check your Active List
                 </div>
               </div>
             ) : (

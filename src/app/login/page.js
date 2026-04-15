@@ -1,46 +1,91 @@
 'use client';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { LogIn } from 'lucide-react';
+import Link from 'next/link';
+import { LogIn, Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
-  const { user, googleSignIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { googleSignIn, loginEmail } = useAuth();
   const router = useRouter();
 
-  // If the user is already logged in, kick them to the dashboard
-  useEffect(() => {
-    if (user) {
-      router.push('/');
-    }
-  }, [user, router]);
-
-  const handleLogin = async () => {
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
     try {
-      await googleSignIn();
-      router.push('/'); // Send them home after success
-    } catch (error) {
-      console.error("Login failed:", error);
+      await loginEmail(email, password);
+      router.push('/');
+    } catch (err) {
+      alert("Login failed. Check your credentials.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white p-10 rounded-3xl shadow-xl border border-gray-100 text-center">
-        <div className="mb-6 inline-flex p-4 bg-blue-50 text-blue-600 rounded-full">
-          <LogIn size={40} />
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-        <p className="text-gray-500 mb-8">Join the community and start saving food today.</p>
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-xl border border-gray-100">
         
+        {/* Header Section */}
+        <div className="text-center mb-10">
+          <div className="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-100">
+            <LogIn className="text-white" size={32} />
+          </div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h1>
+          <p className="text-gray-500 mt-2 font-medium">Sign in to continue saving food.</p>
+        </div>
+
+        {/* Traditional Form */}
+        <form onSubmit={handleEmailLogin} className="space-y-4">
+          <div className="relative">
+            <Mail className="absolute left-4 top-4 text-gray-400" size={18} />
+            <input 
+              type="email" 
+              placeholder="Email Address"
+              className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="relative">
+            <Lock className="absolute left-4 top-4 text-gray-400" size={18} />
+            <input 
+              type="password" 
+              placeholder="Password"
+              className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-lg active:scale-[0.98]"
+          >
+            Sign In
+          </button>
+        </form>
+
+        {/* Separator */}
+        <div className="relative my-8 text-center">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-100"></span></div>
+          <span className="relative bg-white px-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Or</span>
+        </div>
+
+        {/* Google Action */}
         <button 
-          onClick={handleLogin}
-          className="w-full flex items-center justify-center gap-3 py-4 border-2 border-gray-200 rounded-2xl font-semibold text-gray-700 hover:bg-gray-50 transition-all active:scale-95"
+          onClick={googleSignIn}
+          className="w-full flex items-center justify-center gap-3 py-4 border-2 border-gray-100 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-[0.98]"
         >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-          Sign in with Google
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa/google.svg" className="w-5 h-5" alt="Google" />
+          Continue with Google
         </button>
+
+        {/* Footer Link */}
+        <p className="mt-8 text-center text-sm text-gray-500">
+          Don't have an account? <Link href="/signup" className="text-blue-600 font-bold hover:underline">Create one</Link>
+        </p>
       </div>
-    </div>
+    </main>
   );
 }
