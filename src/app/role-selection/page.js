@@ -1,39 +1,59 @@
 'use client';
+
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 import { Utensils, HeartHandshake } from 'lucide-react';
 
-export default function RoleSelection() {
-  const { user } = useAuth();
+export default function RoleSelectionPage() {
+ const { user, setRole } = useAuth();
   const router = useRouter();
 
-const selectRole = async (role) => {
+const selectRole = async (selectedRole) => {
+  if (!user) return;
+
   try {
-    // 1. Save to Firestore [cite: 211, 215]
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
-      email: user.email,
-      role: role,
-      createdAt: new Date()
-    });
-    
-    // 2. Hard refresh to force the app to see the new role 
-    window.location.href = role === 'donor' ? '/' : '/marketplace'; 
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        role: selectedRole,
+        email: user.email
+      },
+      { merge: true }
+    );
+
+    // 🔥 INSTANT STATE UPDATE (THIS FIXES EVERYTHING)
+    setRole(selectedRole);
+
+    // redirect
+    if (selectedRole === 'donor') {
+      router.replace('/donor-dashboard');
+    } else {
+      router.replace('/marketplace');
+    }
+
   } catch (error) {
-    console.error("Error saving role:", error);
+    console.error(error);
+    alert("Failed to set role");
   }
 };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <div className="max-w-2xl w-full text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">How would you like to help?</h1>
-        <p className="text-gray-500 mb-12 text-lg">Select your primary role to get started.</p>
+        
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          How would you like to help?
+        </h1>
+
+        <p className="text-gray-500 mb-12 text-lg">
+          Select your role to continue
+        </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Donor Option */}
+
+          {/* Donor */}
           <button 
             onClick={() => selectRole('donor')}
             className="group bg-white p-10 rounded-3xl shadow-xl border-2 border-transparent hover:border-green-500 transition-all text-left"
@@ -41,11 +61,17 @@ const selectRole = async (role) => {
             <div className="bg-green-100 text-green-600 p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform">
               <Utensils size={32} />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">I am a Donor</h3>
-            <p className="text-gray-500">I want to list surplus food from my restaurant or store.</p>
+
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              I am a Donor
+            </h3>
+
+            <p className="text-gray-500">
+              I want to donate surplus food
+            </p>
           </button>
 
-          {/* Recipient Option */}
+          {/* Recipient */}
           <button 
             onClick={() => selectRole('recipient')}
             className="group bg-white p-10 rounded-3xl shadow-xl border-2 border-transparent hover:border-blue-500 transition-all text-left"
@@ -53,11 +79,18 @@ const selectRole = async (role) => {
             <div className="bg-blue-100 text-blue-600 p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform">
               <HeartHandshake size={32} />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">I am a Recipient</h3>
-            <p className="text-gray-500">I am looking for food donations for myself or an organization.</p>
+
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              I am a Recipient
+            </h3>
+
+            <p className="text-gray-500">
+              I want to receive food
+            </p>
           </button>
+
         </div>
       </div>
-    </div>
+    </main>
   );
 }

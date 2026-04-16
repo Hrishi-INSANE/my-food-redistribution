@@ -1,91 +1,108 @@
 'use client';
+
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogIn, Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { googleSignIn, loginEmail } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  const { loginEmail, googleSignIn } = useAuth();
   const router = useRouter();
 
-  const handleEmailLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
       await loginEmail(email, password);
-      router.push('/');
+      router.replace('/');
+    } catch (error) {
+      alert("Invalid email or password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await googleSignIn();
+      router.replace('/');
     } catch (err) {
-      alert("Login failed. Check your credentials.");
+      alert("Google login failed: " + err.message);
     }
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-xl border border-gray-100">
-        
-        {/* Header Section */}
-        <div className="text-center mb-10">
-          <div className="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-100">
-            <LogIn className="text-white" size={32} />
-          </div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h1>
-          <p className="text-gray-500 mt-2 font-medium">Sign in to continue saving food.</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-gray-100 p-4">
+      <div className="w-full max-w-md">
 
-        {/* Traditional Form */}
-        <form onSubmit={handleEmailLogin} className="space-y-4">
-          <div className="relative">
-            <Mail className="absolute left-4 top-4 text-gray-400" size={18} />
-            <input 
-              type="email" 
-              placeholder="Email Address"
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
+        {/* Header (fix empty feel) */}
+        <h1 className="text-4xl font-bold text-gray-900 text-center mb-2">
+          FoodShare
+        </h1>
+        <p className="text-gray-600 text-center mb-6">
+          Reduce waste. Help people.
+        </p>
+
+        {/* Card */}
+        <div className="bg-white p-8 rounded-2xl shadow-lg w-full border border-gray-200">
+          
+          <h2 className="text-xl font-bold mb-2 text-center text-gray-900">
+            Welcome Back
+          </h2>
+          <p className="text-gray-600 text-center mb-6">
+            Login to continue
+          </p>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="email"
+              placeholder="Email"
+              className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-          </div>
 
-          <div className="relative">
-            <Lock className="absolute left-4 top-4 text-gray-400" size={18} />
-            <input 
-              type="password" 
+            <input
+              type="password"
               placeholder="Password"
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
+              className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
 
-          <button 
-            type="submit"
-            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-lg active:scale-[0.98]"
+            <button className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition">
+              {loading ? "Checking..." : "Login"}
+            </button>
+          </form>
+
+          <div className="my-6 text-center text-gray-500 text-sm">OR</div>
+
+          {/* ✅ FIXED GOOGLE BUTTON */}
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl font-semibold text-gray-800 hover:bg-gray-100 transition"
           >
-            Sign In
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
+              className="w-5 h-5"
+              alt="Google"
+            />
+            Continue with Google
           </button>
-        </form>
 
-        {/* Separator */}
-        <div className="relative my-8 text-center">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-100"></span></div>
-          <span className="relative bg-white px-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Or</span>
+          <p className="mt-6 text-center text-gray-600 text-sm">
+            Don't have an account?{' '}
+            <Link href="/signup" className="text-green-600 font-bold">
+              Sign up
+            </Link>
+          </p>
         </div>
-
-        {/* Google Action */}
-        <button 
-          onClick={googleSignIn}
-          className="w-full flex items-center justify-center gap-3 py-4 border-2 border-gray-100 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-[0.98]"
-        >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa/google.svg" className="w-5 h-5" alt="Google" />
-          Continue with Google
-        </button>
-
-        {/* Footer Link */}
-        <p className="mt-8 text-center text-sm text-gray-500">
-          Don't have an account? <Link href="/signup" className="text-blue-600 font-bold hover:underline">Create one</Link>
-        </p>
       </div>
-    </main>
+    </div>
   );
 }
